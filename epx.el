@@ -3,7 +3,7 @@
 ;; Copyright (c) 2025 Oleksandr Korzh
 
 ;; Author: Oleksandr Korzh <alex@korzh.me>
-;; Version: 0.1
+;; Version: 0.2
 ;; Package-Requires: ((emacs "29.1"))
 ;; URL: https://git.sr.ht/~alex-iam/epx
 ;; Keywords: project, shell, tools
