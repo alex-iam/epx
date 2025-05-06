@@ -45,6 +45,7 @@
 
 
 (defun epx--find-command-by-prop (prop-name prop-value)
+  "Find a command in commands storage by a propery."
   (cl-find-if (lambda (cmd)
 		(equal (plist-get cmd prop-name) prop-value))
 	      (epx--read-cmds-locals)))
