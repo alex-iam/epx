@@ -26,19 +26,36 @@
 
 ;; epx is a command runner and manager for project.el in Emacs.
 ;; ’epx’ stands for ’Emacs Project eXecutor’.
+
 ;; It stores commands in .dir-locals.el or any other dir-locals-file that
 ;; you set. It allows you to add or remove commands, no editing
 ;; capabilities for now. You can choose whether to use compilation
-;; buffer when you create your command. After the command is created,
-;; you can execute it using ’epx-run-command-in-shell’ (You’ll probably
-;; want to bind it). Completion for command names is provided. Executing
-;; a command happens in a separate window (either ’shell’ or compilation).
+;; buffer when you create your command.
+
+;; After the command is created, you can execute it using
+;; ’epx-run-command-in-shell’ (You’ll probably want to bind it). Completion
+;; for command names is provided. Executing a command happens in a separate
+;; window (either ’shell’ or compilation).
 
 ;;; Code:
 (require 'project)
 (require 'cl-lib)
 (require 'files)
 (require 'files-x)
+
+
+(defun epx--find-command-by-prop (prop-name prop-value)
+  (cl-find-if (lambda (cmd)
+		(equal (plist-get cmd prop-name) prop-value))
+	      (epx--read-cmds-locals)))
+
+
+(defun epx--annotate (candidate)
+  "Show command for CANDIDATE along with it’s name on completion"
+  (when candidate
+    (format "%s %s"
+	    (propertize " " 'display '(space :align-to 30))
+	    (propertize (plist-get (epx--find-command-by-prop :name candidate) :command) 'face 'completions-annotations))))
 
 
 (defun epx--current-project-root ()
@@ -67,6 +84,7 @@ If the file already exists, do nothing."
          (cmds (if (file-exists-p locals-file)
                    (epx--read-cmds-locals)))
          (history (mapcar (lambda (plist) (plist-get plist :name)) cmds))
+	 (completion-extra-properties (list :annotation-function #'epx--annotate))
          (name (completing-read "Project command: " history nil t)))
     (cl-find-if (lambda (plist) (string= (plist-get plist :name) name)) cmds)))
 
@@ -102,7 +120,7 @@ When called interactively, prompt for COMMAND with completion from history."
 	 (use-compilation (plist-get command :compile)))
     (if use-compilation
 	(let ((default-directory root))
-	  (compilation-start cmd nil )) ;; TODO:  compilation-buffer-name-function - project-local buffer name
+	  (compilation-start cmd nil )) ;; TODO: research using project-compile instead
       (let* ((win (epx--get-or-create-shell-window root))
 	     (proc (get-buffer-process (window-buffer win))))
 	(select-window win)
