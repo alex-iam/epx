@@ -4,7 +4,7 @@
 
 ;; Author: Oleksandr Korzh <alex@korzh.me>
 ;; Version: 0.2
-;; Package-Requires: ((emacs "29.1") (cl-lib "1.0"))
+;; Package-Requires: ((emacs "29.1"))
 ;; URL: https://git.sr.ht/~alex-iam/epx
 ;; Keywords: project, shell, tools
 
@@ -28,16 +28,16 @@
 ;; ’epx’ stands for ’Emacs Project eXecutor’.
 
 ;; Warning! Only works in Unix-like systems for now due to
-;; how environment variables are processed. This is temporary.
+;; how environment variables are processed.  This is temporary.
 
 ;; It stores commands in .dir-locals.el or any other dir-locals-file that
-;; you set. It allows you to add or remove commands, no editing
-;; capabilities for now. You can choose whether to use compilation
+;; you set.  It allows you to add or remove commands, no editing
+;; capabilities for now.  You can choose whether to use compilation
 ;; buffer when you create your command.
 
 ;; After the command is created, you can execute it using
-;; ’epx-run-command-in-shell’ (You’ll probably want to bind it). Completion
-;; for command names is provided. Executing a command happens in a separate
+;; ’epx-run-command-in-shell’ (You’ll probably want to bind it).  Completion
+;; for command names is provided.  Executing a command happens in a separate
 ;; window (either ’shell’ or compilation).
 
 ;;; Code:
@@ -48,14 +48,14 @@
 
 
 (defun epx--find-command-by-prop (prop-name prop-value)
-  "Find a command in commands storage by a propery."
+  "Find a command in commands storage by PROP-NAME and PROP-VALUE."
   (cl-find-if (lambda (cmd)
 		(equal (plist-get cmd prop-name) prop-value))
 	      (epx--read-cmds-locals)))
 
 
 (defun epx--annotate (candidate)
-  "Show command for CANDIDATE along with it’s name on completion"
+  "Show command for CANDIDATE along with it’s name on completion."
   (when candidate
     (format "%s %s"
 	    (propertize " " 'display '(space :align-to 30))
@@ -70,12 +70,12 @@
 
 
 (defun epx--locals-file ()
-  "Return the path to the current project's dir-locals-file."
+  "Return the path to the current project's ‘dir-locals-file."
     (expand-file-name dir-locals-file (epx--current-project-root)))
 
 
 (defun epx--create-locals-file ()
-  "Create dir-locals-file in current project root.
+  "Create ‘dir-locals-file’ in current project root.
 If the file already exists, do nothing."
   (let ((file (epx--locals-file)))
     (unless (file-exists-p file)
@@ -132,7 +132,7 @@ When called interactively, prompt for COMMAND with completion from history."
 
 ;;;###autoload
 (defun epx-remove-command (&optional command)
-  "Delete COMMAND from dir-locals-file."
+  "Delete COMMAND from ‘dir-locals-file’."
   (interactive
    (list (epx--read-shell-command)))
   (if (y-or-n-p (format "Are you sure you want to remove command %s?" (plist-get command :name)))
@@ -157,9 +157,9 @@ When called interactively, prompt for COMMAND with completion from history."
 
 ;;;###autoload
 (defun epx-add-command (&optional cmd name env-vars compile)
-  "Add a new command to dir-locals-file interactively.
+  "Add a new command to ‘dir-locals-file’ interactively.
 CMD and NAME are expected to be non-empty.
-ENV and COMPILE default to nil."
+ENV-VARS and COMPILE default to nil."
   (interactive
    (let* ((_ (epx--current-project-root)) ;; to check we’re in the project
 	  (cmd (read-string "Shell command to run: "))
@@ -188,13 +188,13 @@ ENV and COMPILE default to nil."
 
 
 (defun epx--read-cmds-locals ()
-  "Read project commands from dir-locals-file"
+  "Read project commands from ‘dir-locals-file’."
   (hack-dir-local-variables)
   (alist-get 'local-project-cmds file-local-variables-alist nil nil #'equal))
 
 
 (defun epx--record-command (command)
-  "Add COMMAND to `local-project-cmds' in dir-locals-file.
+  "Add COMMAND to `local-project-cmds' in ‘dir-locals-file’.
 If a command with the same name already exists, throw an error"
   (let ((locals-file (epx--locals-file)))
     (when (file-exists-p locals-file)
