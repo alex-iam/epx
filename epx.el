@@ -4,7 +4,7 @@
 
 ;; Author: Oleksandr Korzh <alex@korzh.me>
 ;; Version: 0.2
-;; Package-Requires: ((emacs "29.1"))
+;; Package-Requires: ((emacs "29.1") (cl-lib "1.0"))
 ;; URL: https://git.sr.ht/~alex-iam/epx
 ;; Keywords: project, shell, tools
 
