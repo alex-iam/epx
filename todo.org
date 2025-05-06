@@ -1,4 +1,3 @@
-* TODO think of better env parsing/entering
 * TODO consider other storages again (separate .el, .json, .toml...) (parse json to plist: json-object-type) 
 * TODO add justfile commands and similar (perhaps customizable addition to completion in epx-run-command-in-shell)
 ** justfile
@@ -6,5 +5,4 @@
 ** If feeling ambitious, make
 ** Rakefile
 ** pyproject.toml
-* TODO show the command itself on completion, not only name
 * TODO allow customization of whether throw an error on non-existent project (or prompt for it)

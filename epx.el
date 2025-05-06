@@ -27,6 +27,9 @@
 ;; epx is a command runner and manager for project.el in Emacs.
 ;; ’epx’ stands for ’Emacs Project eXecutor’.
 
+;; Warning! Only works in Unix-like systems for now due to
+;; how environment variables are processed. This is temporary.
+
 ;; It stores commands in .dir-locals.el or any other dir-locals-file that
 ;; you set. It allows you to add or remove commands, no editing
 ;; capabilities for now. You can choose whether to use compilation
@@ -143,25 +146,17 @@ When called interactively, prompt for COMMAND with completion from history."
 	  (kill-buffer)))))
 
 
-(defun epx--parse-env (env)
-  "Parse ENV from a string separated by semicolons into a list of plists."
-  (mapcar (lambda(s)
-	    (let ((pair (split-string s "\=")))
-	      (list :name (car pair) :value (cadr pair))))
-	  (split-string env "\\;")))
-
-
 (defun epx--prepare-env (env-list)
   "Convert ENV-LIST from the list of plists into a semicolon-separated string."
   (string-join
    (mapcar (lambda (el)
 	     (concat (plist-get el :name) "=" (plist-get el :value)))
 	   env-list)
-   ";"))
+   " "))
 
 
 ;;;###autoload
-(defun epx-add-command (&optional cmd name env compile)
+(defun epx-add-command (&optional cmd name env-vars compile)
   "Add a new command to dir-locals-file interactively.
 CMD and NAME are expected to be non-empty.
 ENV and COMPILE default to nil."
@@ -173,14 +168,22 @@ ENV and COMPILE default to nil."
           (name (read-string "Command name: "))
           (_ (when (string-empty-p name)
                (user-error "Command name cannot be empty")))
-          (env (read-string "Env vars (semicolon-separated): "))
-          (compile (y-or-n-p "Do you want to use compilation buffer for your command?")))
-     (list cmd name env compile)))
+	  (compile (y-or-n-p "Do you want to use compilation buffer for your command?"))
+          ;; (env (read-string "Env vars (semicolon-separated): "))
+	  (env-vars '())
+	  (env-name ""))
+     (while (progn
+	      (setq env-name (read-string "Environment variable name (empty to finish): "))
+	      (not (string-empty-p env-name)))
+       (let ((env-value (read-string (format "Value for %s: " env-name))))
+
+	 (if (not (string-empty-p env-value))
+	     (push (list :name env-name :value env-value) env-vars)
+	   (warn "Empty value, skipping this variable"))))
+
+       (list cmd name env-vars compile)))
   (epx--create-locals-file)
-  (let ((new-cmd (list :name name :command cmd :env (if (equal "" env)
-							nil
-						      (epx--parse-env env))
-		       :compile compile)))
+  (let ((new-cmd (list :name name :command cmd :env env-vars :compile compile)))
     (epx--record-command new-cmd)))
 
 
