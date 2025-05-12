@@ -9,30 +9,22 @@ environment:
   REPO_DIR: epx
 tasks:
   - setup: |
-      echo "Cloning package-lint..."
       git clone --depth 1 https://github.com/purcell/package-lint.git "$PACKAGE_LINT_DIR"
-      echo "Setup complete."
   - byte-compile: |
-      echo "Running byte-compilation..."
       cd "$REPO_DIR"
       emacs --batch \
         --eval "(progn \
                   (setq byte-compile-error-on-warn t) \
                   (byte-compile-file \"epx.el\"))"
-      echo "Byte-compilation finished."
   - checkdoc: |
-      echo "Running checkdoc..."
       cd "$REPO_DIR"
       emacs --batch \
         --eval "(progn \
                   (require 'checkdoc) \
                   (checkdoc-file \"epx.el\"))"
-      echo "Checkdoc finished."
   - package-lint: |
-      echo "Running package-lint..."
       cd "$REPO_DIR"
       PACKAGE_LINT_ABS_PATH="/home/build/${PACKAGE_LINT_DIR}"
       emacs --batch \
         --load "${PACKAGE_LINT_ABS_PATH}/package-lint.el" \
         --funcall package-lint-batch-and-exit "epx.el"
-      echo "Package-lint finished."
