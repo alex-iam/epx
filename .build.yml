@@ -33,8 +33,6 @@ tasks:
       cd "$REPO_DIR"
       PACKAGE_LINT_ABS_PATH="/home/build/${PACKAGE_LINT_DIR}"
       emacs --batch \
-        --eval "(add-to-list 'load-path \"${PACKAGE_LINT_ABS_PATH}\")" \
-        --eval "(progn \
-                  (require 'package-lint) \
-                  (package-lint-file \"epx.el\"))"
+        --load "${PACKAGE_LINT_ABS_PATH}/package-lint.el" \
+        --funcall package-lint-batch-and-exit "epx.el"
       echo "Package-lint finished."
