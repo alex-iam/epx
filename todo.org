@@ -6,3 +6,4 @@
 ** Rakefile
 ** pyproject.toml
 * TODO allow customization of whether throw an error on non-existent project (or prompt for it)
+* TODO add ~eshell~ as a user-customizable option
