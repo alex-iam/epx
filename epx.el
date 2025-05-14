@@ -3,7 +3,7 @@
 ;; Copyright (c) 2025 Oleksandr Korzh
 
 ;; Author: Oleksandr Korzh <alex@korzh.me>
-;; Version: 0.2
+;; Version: 0.3
 ;; Package-Requires: ((emacs "29.1"))
 ;; URL: https://git.sr.ht/~alex-iam/epx
 ;; Keywords: project, shell, tools
@@ -30,10 +30,14 @@
 ;; Warning! Only works in Unix-like systems for now due to
 ;; how environment variables are processed.  This is temporary.
 
-;; It stores commands in .dir-locals.el or any other dir-locals-file that
-;; you set.  It allows you to add or remove commands, no editing
-;; capabilities for now.  You can choose whether to use compilation
-;; buffer when you create your command.
+;; It stores commands in dir-locals-file (e.g. .dir-locals.el) or a dedicated
+;; file called .epx.eld in the project root.
+;; This behaviour is controlled by the variable ‘epx-commands-file-type’.
+;; The package can work with only one commands file per project.
+
+;; The package allows you to add or remove commands, no editing capabilities
+;; for now.  You can choose whether to use compilation buffer when you create
+;; your command.
 
 ;; After the command is created, you can execute it using
 ;; ’epx-run-command-in-shell’ (You’ll probably want to bind it).  Completion
@@ -49,12 +53,13 @@
 
 
 (defgroup epx nil
-  "Manage and run project-specific shell commands"
-  :version 30.0)
+  "Manage and run project-specific shell commands."
+  :version "30.0"
+  :group 'tools)
 
 ;; TODO: check variable values
 (defcustom epx-commands-file-type 'locals
-  "What file type to use to store commands. Accepted values: ’locals, ’eld"
+  "What file type to use to store commands.  Accepted values: ’locals, ’eld."
   :type '(choice (const :tag "Locals file (.dir-locals.el)" locals)
                  (const :tag "Elisp data file (.eld)" eld))
   :group 'epx)
@@ -83,7 +88,7 @@
 
 
 (defun epx--commands-file-name ()
-  "Get file name of commands file based on epx-commands-file-type"
+  "Get file name of commands file based on `epx-commands-file-type'."
   (cl-case epx-commands-file-type
     (locals dir-locals-file)
     (eld ".epx.eld")
@@ -153,9 +158,9 @@ When called interactively, prompt for COMMAND with completion from history."
 
 
 (defun epx--write-commands-to-file (commands)
-  "Write COMMANDS to commands file depending on the epx-commands-file-type varible."
+  "Write COMMANDS to commands file depending on the `epx-commands-file-type'."
   (cl-case epx-commands-file-type
-    (locals (
+    (locals (progn
                (delete-dir-local-variable nil 'local-project-cmds)
 	       (add-dir-local-variable nil 'local-project-cmds commands)))
     (eld (with-temp-file (epx--commands-file)
@@ -219,7 +224,8 @@ ENV-VARS and COMPILE default to nil."
 (defun epx--read-commands-from-file ()
   "Read project commands from commands file."
   (cl-case epx-commands-file-type
-    (locals ((hack-dir-local-variables)
+    (locals (progn
+	      (hack-dir-local-variables)
 	      (alist-get 'local-project-cmds file-local-variables-alist nil nil #'equal)))
     (eld (with-temp-buffer
 	   (insert-file-contents (epx--commands-file))

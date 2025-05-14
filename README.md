@@ -13,8 +13,8 @@ your Emacs projects (those recognized by `project.el`).
 
 It stores named commands, along with optional environment variables and
 a flag to use `compilation-mode`, directly in each project's
-`/.dir-locals.el` file. You get interactive commands to easily add,
-remove, and run these project tasks.
+root: in `.dir-locals.el` or  `.epx.eld` file. You get interactive commands to
+easily add, remove, and run these project tasks.
 
 # Features
 
@@ -23,7 +23,8 @@ remove, and run these project tasks.
     `project-shell`.
 -   Can run the command in `compilation-mode` instead of a
     shell.
--   Stores everything as plain Elisp in `.dir-locals.el` .
+-   Can use either `.dir-locals.el` or a dedicated `.epx.eld` to store commands.
+-   Command storage can be customized by `epx-commands-file-type` variable (globally).
 -   Pure Elisp, only depends on built-in `project`.
 
 # Installation
@@ -43,9 +44,12 @@ You can also always install the package using `M-x package-install` instead.
 
 # Usage
 
+- You can use variable `epx-commands-file-type` to control where your commands
+  are stored. It accepts the following values: ’locals and ’eld.
+
 - `epx-add-command`
 :   Prompt for a command, name, env vars, and whether to use a
-    compilation buffer; writes it to `.dir-locals.el`.
+    compilation buffer; writes it to commands file.
 
 - `epx-run-command-in-shell`
 :   Pick a saved command and execute it in a shell (or compilation)
@@ -54,13 +58,22 @@ You can also always install the package using `M-x package-install` instead.
 - `epx-remove-command`
 :   Remove a saved command from `.dir-locals.el`.
 
-# Example entry in .dir-locals.el
+# Example entries in storage files
+## .dir-locals.el
 
 ```
 ((nil . ((local-project-cmds ;; This is the variable epx looks for
           . ((:name "lint"
               :command "ruff check ."
               :compile t)))))
+```
+
+## .epx.eld
+
+```
+((:name "lint"
+  :command "ruff check ."
+  :compile t))
 ```
 
 With this entry present in your project root's `/.dir-locals.el` (and
@@ -73,7 +86,7 @@ working directory.
 
 Patches, bug reports, and suggestions are welcome! Please use the
 SourceHut mailing list or issue tracker:
-<https://git.sr.ht/~alex-iam/epx>.
+<https://git.sr.ht/~alex-iam/epx>,<https://todo.sr.ht/~alex-iam/epx>
 
 # License
 
