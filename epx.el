@@ -48,8 +48,6 @@
 (require 'comint)
 
 
-;; CURRENT GOAL: .epx.eld (emacs-lisp-data) as a potential storage
-
 (defgroup epx nil
   "Manage and run project-specific shell commands"
   :version 30.0)
@@ -66,7 +64,7 @@
   "Find a command in commands storage by PROP-NAME and PROP-VALUE."
   (cl-find-if (lambda (cmd)
 		(equal (plist-get cmd prop-name) prop-value))
-	      (epx--read-cmds-locals)))
+	      (epx--read-commands-from-file)))
 
 
 (defun epx--annotate (candidate)
@@ -173,7 +171,7 @@ When called interactively, prompt for COMMAND with completion from history."
   (interactive
    (list (epx--read-shell-command)))
   (if (y-or-n-p (format "Are you sure you want to remove command %s?" (plist-get command :name)))
-      (let* ((local-project-cmds (epx--read-cmds-locals) )
+      (let* ((local-project-cmds (epx--read-commands-from-file) )
              (updated (cl-remove command local-project-cmds :test #'equal)))
 	(epx--write-commands-to-file updated))))
 
