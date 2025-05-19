@@ -1,4 +1,5 @@
-* TODO consider other storages again (separate .el, .json, .toml...) (parse json to plist: json-object-type) 
+* IN PROGRESS consider other storages again (separate .el, .json, .toml...) (parse json to plist: json-object-type) 
+** DONE separate ~.eld~
 * TODO add justfile commands and similar (perhaps customizable addition to completion in epx-run-command-in-shell)
 ** justfile
 ** Taskfile
