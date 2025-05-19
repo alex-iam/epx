@@ -72,11 +72,11 @@
 	    (write . epx--write-command-to-eld)))))
 
 
-(defun epx--get-backend-function (operation)
-  "Get value for OPERATION and ‘epx-commands-file-type’ from ‘epx--storage-backends’."
+(defun epx--get-backend-function (op)
+  "Get value for OP and ‘epx-commands-file-type’ from ‘epx--storage-backends’."
     (let ((backend (assq epx-commands-file-type epx--storage-backends)))
     (if backend
-        (alist-get operation (cdr backend))
+        (alist-get op (cdr backend))
       (user-error "Variable epx-commands-file-type has invalid value: %s. Valid values are: ’locals, ’eld" epx-commands-file-type))))
 
 ;; --- End Custom variables and handling ---
@@ -150,7 +150,7 @@
 
 
 (defun epx--write-commands-to-locals (commands)
-  "Write COMMANDS to ‘.dir-locals.el’"
+  "Write COMMANDS to ‘.dir-locals.el’."
   (with-current-buffer (find-file-noselect (epx--commands-file))
     (delete-dir-local-variable nil 'local-project-cmds)
     (add-dir-local-variable nil 'local-project-cmds commands)
@@ -159,7 +159,7 @@
 
 
 (defun epx--write-command-to-eld(commands)
-  "Write COMMANDS to ‘.epx.eld’"
+  "Write COMMANDS to ‘.epx.eld’."
   (with-temp-file (epx--commands-file)
 	   (let ((print-length nil)
 		 (print-level  nil))
