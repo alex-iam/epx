@@ -52,18 +52,36 @@
 (require 'comint)
 
 
+;; --- Custom variables and handling ---
+
 (defgroup epx nil
   "Manage and run project-specific shell commands."
   :version "30.0"
   :group 'tools)
 
-;; TODO: check variable values
 (defcustom epx-commands-file-type 'locals
   "What file type to use to store commands.  Accepted values: ’locals, ’eld."
   :type '(choice (const :tag "Locals file (.dir-locals.el)" locals)
                  (const :tag "Elisp data file (.eld)" eld))
   :group 'epx)
 
+(defvar epx--storage-backends
+  '((locals . ((read . epx--read-commands-from-locals)
+	       (write . epx--write-commands-to-locals)))
+    (eld . ((read . epx--read-commands-from-eld)
+	    (write . epx--write-command-to-eld)))))
+
+
+(defun epx--get-backend-function (operation)
+  "Get value for OPERATION and ‘epx-commands-file-type’ from ‘epx--storage-backends’."
+    (let ((backend (assq epx-commands-file-type epx--storage-backends)))
+    (if backend
+        (alist-get operation (cdr backend))
+      (user-error "Variable epx-commands-file-type has invalid value: %s. Valid values are: ’locals, ’eld" epx-commands-file-type))))
+
+;; --- End Custom variables and handling ---
+
+;; --- Annotation ---
 
 (defun epx--find-command-by-prop (prop-name prop-value)
   "Find a command in commands storage by PROP-NAME and PROP-VALUE."
@@ -79,6 +97,9 @@
 	    (propertize " " 'display '(space :align-to 30))
 	    (propertize (plist-get (epx--find-command-by-prop :name candidate) :command) 'face 'completions-annotations))))
 
+;; --- End Annotation ---
+
+;; --- Operations with files ---
 
 (defun epx--current-project-root ()
   "Return current project’s root.  If there’s no project, throw an error."
@@ -101,13 +122,57 @@
 
 
 (defun epx--create-commands-file ()
-  "Create commands file in current project root.
-If the file already exists, do nothing."
+  "Create commands file in current project root if not exists."
   (let ((file (epx--commands-file)))
     (unless (file-exists-p file)
       (write-region "" nil file))))
 
+
+(defun epx--read-commands-from-locals ()
+  "Read project commands from ‘.dir-locals.el’."
+  (hack-dir-local-variables)
+  (alist-get 'local-project-cmds file-local-variables-alist nil nil #'equal))
+
+
+(defun epx--read-commands-from-eld ()
+  "Read project commands from ‘.epx.eld’."
+  (with-temp-buffer
+	   (insert-file-contents (epx--commands-file))
+	   (goto-char (point-min))
+	   (if (eobp)
+               nil
+             (read (current-buffer)))))
+
+
+(defun epx--read-commands-from-file ()
+  "Read project commands from commands file."
+  (funcall (epx--get-backend-function 'read)))
+
+
+(defun epx--write-commands-to-locals (commands)
+  "Write COMMANDS to ‘.dir-locals.el’"
+  (with-current-buffer (find-file-noselect (epx--commands-file))
+    (delete-dir-local-variable nil 'local-project-cmds)
+    (add-dir-local-variable nil 'local-project-cmds commands)
+    (save-buffer)
+    (kill-buffer)))
+
+
+(defun epx--write-command-to-eld(commands)
+  "Write COMMANDS to ‘.epx.eld’"
+  (with-temp-file (epx--commands-file)
+	   (let ((print-length nil)
+		 (print-level  nil))
+	     (prin1 commands (current-buffer)))))
+
   
+(defun epx--write-commands-to-file (commands)
+  "Write COMMANDS to commands file depending on the `epx-commands-file-type'."
+  (funcall (epx--get-backend-function 'write) commands))
+
+;; --- End Operations with files ---
+
+
 (defun epx--read-shell-command ()
   "Prompt for a shell command with completion from commands file."
   (let* ((commands-file (epx--commands-file))
@@ -155,19 +220,6 @@ When called interactively, prompt for COMMAND with completion from history."
 	     (proc (get-buffer-process (window-buffer win))))
 	(select-window win)
         (comint-send-string proc (concat cmd "\n"))))))
-
-
-(defun epx--write-commands-to-file (commands)
-  "Write COMMANDS to commands file depending on the `epx-commands-file-type'."
-  (cl-case epx-commands-file-type
-    (locals (progn
-               (delete-dir-local-variable nil 'local-project-cmds)
-	       (add-dir-local-variable nil 'local-project-cmds commands)))
-    (eld (with-temp-file (epx--commands-file)
-	   (let ((print-length nil)
-		 (print-level  nil))
-	     (prin1 commands (current-buffer)))))
-    (t (user-error "Variable epx-commands-file-type has invalid value: %s. Valid values are: ’locals, ’eld" epx-commands-file-type))))
 
 
 ;;;###autoload
@@ -221,19 +273,6 @@ ENV-VARS and COMPILE default to nil."
     (epx--record-command new-cmd)))
 
 
-(defun epx--read-commands-from-file ()
-  "Read project commands from commands file."
-  (cl-case epx-commands-file-type
-    (locals (progn
-	      (hack-dir-local-variables)
-	      (alist-get 'local-project-cmds file-local-variables-alist nil nil #'equal)))
-    (eld (with-temp-buffer
-	   (insert-file-contents (epx--commands-file))
-	   (goto-char (point-min))
-	   (if (eobp)
-               nil
-             (read (current-buffer)))))
-    (t (user-error "Variable epx-commands-file-type has invalid value: %s. Valid values are: ’locals, ’eld" epx-commands-file-type))))
 
 
 (defun epx--record-command (command)
