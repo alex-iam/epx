@@ -35,7 +35,7 @@ easily add, remove, and run these project tasks.
 
 `epx` can be installed from MELPA. A common way to setup the package using `use-package` is:
 
-```
+```emacs-lisp
 (use-package epx
   :after project
   :bind
@@ -69,7 +69,7 @@ You can also always install the package using `M-x package-install` instead.
 
 ## .dir-locals.el
 
-```
+```emacs-lisp
 ((nil . ((local-project-cmds ;; This is the variable epx looks for
           . ((:name "lint"
               :command "ruff check ."
@@ -79,7 +79,7 @@ You can also always install the package using `M-x package-install` instead.
 ## .epx.eld
 You'll have to set `epx-commands-file-type` to `'eld`.
 
-```
+```emacs-lisp
 ((:name "lint"
   :command "ruff check ."
   :compile t))
