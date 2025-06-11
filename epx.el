@@ -230,6 +230,12 @@
         (project-shell)
         (selected-window))))
 
+(defun epx--get-shell-buffer-name (command)
+  "Return a function that returns the shell buffer name for COMMAND."
+  (let ((cmd (plist-get command :name))
+	(compilation-type (if (plist-get command :compile) "compilation" "shell")))
+    (lambda (mode)
+      (format "*%s* in %s: [%s]" compilation-type (epx--current-project-root) cmd))))
 
 ;;;###autoload
 (defun epx-run-command-in-shell (&optional command)
@@ -247,7 +253,7 @@ When called interactively, prompt for COMMAND with completion from history."
 	 (use-compilation (plist-get command :compile)))
     (if use-compilation
 	(let ((default-directory root))
-	  (compilation-start cmd nil )) ;; TODO: research using project-compile instead
+	  (compilation-start cmd nil (epx--get-shell-buffer-name command))) ;; TODO: research using project-compile instead
       (let* ((win (epx--get-or-create-shell-window root))
 	     (proc (get-buffer-process (window-buffer win))))
 	(select-window win)
