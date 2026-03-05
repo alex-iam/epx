@@ -71,6 +71,7 @@
   :version "30.0"
   :group 'tools)
 
+;;;###autoload
 (defcustom epx-commands-file-type 'locals
   "What file type to use to store commands.  Accepted values: ’locals, ’eld."
   :type '(choice (const :tag "Locals file (.dir-locals.el)" locals)
@@ -118,8 +119,8 @@
 
 (defun epx--current-project-root ()
   "Return current project’s root.  If there’s no project, throw an error."
-  (if (project-current)
-      (project-root (project-current))
+  (if-let ((proj (project-current)))
+      (project-root proj)
     (error "No project found.  This only works in projects")))
 
 
@@ -144,7 +145,8 @@
 
 
 (defun epx--rename-deprecated-variable ()
-  "Rename LOCAL-PROJECT-CMDS to EPX-COMMANDS in .DIR-LOCALS.EL.  Return t if renamed, else nil."
+  "Rename LOCAL-PROJECT-CMDS to EPX-COMMANDS in .DIR-LOCALS.EL.
+Return t if renamed, else nil."
   (hack-dir-local-variables)
   (when-let ((commands (alist-get 'local-project-cmds file-local-variables-alist nil nil #'equal)))
       (if (y-or-n-p "You are using deprecated variable name in .dir-locals.el.  Current name is ‘epx-commands’.  Rename?")
@@ -154,8 +156,7 @@
 		   (save-buffer)
 		   (kill-buffer))
 		 (setq file-local-variables-alist nil)
-		 t)))
-  t)
+		 t))))
 
 
 (defun epx--read-commands-from-locals ()
@@ -190,14 +191,14 @@
       (kill-buffer))))
 
 
-(defun epx--write-command-to-eld(commands)
+(defun epx--write-command-to-eld (commands)
   "Write COMMANDS to ‘.epx.eld’."
   (with-temp-file (epx--commands-file)
 	   (let ((print-length nil)
 		 (print-level  nil))
 	     (prin1 commands (current-buffer)))))
 
-  
+
 (defun epx--write-commands-to-file (commands)
   "Write COMMANDS to commands file depending on the `epx-commands-file-type'."
   (funcall (epx--get-backend-function 'write) commands))
@@ -260,8 +261,8 @@ When called interactively, prompt for COMMAND with completion from history."
   (interactive
    (list (epx--read-shell-command)))
   (when (y-or-n-p (format "Are you sure you want to remove command %s?" (plist-get command :name)))
-      (let* ((local-project-cmds (epx--read-commands-from-file) )
-             (updated (cl-remove command local-project-cmds :test #'equal)))
+      (let* ((existing-cmds (epx--read-commands-from-file))
+             (updated (cl-remove command existing-cmds :test #'equal)))
 	(epx--write-commands-to-file updated))))
 
 

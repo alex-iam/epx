@@ -70,7 +70,7 @@ You can also always install the package using `M-x package-install` instead.
 ## .dir-locals.el
 
 ```emacs-lisp
-((nil . ((local-project-cmds ;; This is the variable epx looks for
+((nil . ((epx-commands ;; This is the variable epx looks for
           . ((:name "lint"
               :command "ruff check ."
               :compile t)))))
