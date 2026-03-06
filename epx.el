@@ -3,7 +3,7 @@
 ;; Copyright (c) 2025 Oleksandr Korzh
 
 ;; Author: Oleksandr Korzh <alex@korzh.me>
-;; Version: 0.3
+;; Version: 0.4
 ;; Package-Requires: ((emacs "29.1"))
 ;; URL: https://git.sr.ht/~alex-iam/epx
 ;; Keywords: project, shell, tools
@@ -44,7 +44,8 @@
 ;; This command provides completion for command name.  It runs the command,
 ;; setting environment variables temporarily.  Command is ran in a separate
 ;; window, which will contail either shell or compilation buffer, depending
-;; on command’s :compile option.
+;; on command’s :compile option.  Setting ‘epx-use-eshell’ to t will use
+;; eshell instead of shell for non-compilation commands.
 
 ;; Commands are stored in dir-locals-file (e.g. .dir-locals.el) or a dedicated
 ;; file called .epx.eld in the project root.
@@ -60,7 +61,8 @@
 (require 'files)
 (require 'files-x)
 (require 'comint)
-
+(require 'esh-mode)
+(require 'em-hist)
 
 
 
@@ -76,6 +78,12 @@
   "What file type to use to store commands.  Accepted values: ’locals, ’eld."
   :type '(choice (const :tag "Locals file (.dir-locals.el)" locals)
                  (const :tag "Elisp data file (.eld)" eld))
+  :group 'epx)
+
+;;;###autoload
+(defcustom epx-use-eshell nil
+  "Whether to use eshell to run commands intended to run in shell."
+  :type 'boolean
   :group 'epx)
 
 (defvar epx--storage-backends
@@ -219,17 +227,30 @@ Return t if renamed, else nil."
 
 (defun epx--get-or-create-shell-window (project-root)
   "Return a window with a shell for PROJECT-ROOT, creating one if necessary."
-  (or (cl-find-if
+  (let ((epx-shell-mode (if epx-use-eshell 'eshell-mode 'shell-mode ))
+        (epx-project-shell (if epx-use-eshell 'project-eshell 'project-shell)))
+    (or (cl-find-if
        (lambda (win)
          (with-current-buffer (window-buffer win)
-           (and (eq major-mode 'shell-mode)
+           (and (eq major-mode epx-shell-mode)
                 (string-prefix-p project-root default-directory))))
        (window-list nil 'nomini))
       (progn
         (split-window-sensibly)
         (other-window 1)
-        (project-shell)
-        (selected-window))))
+        (funcall epx-project-shell)
+        (selected-window)))))
+
+
+(defun epx--send-to-shell (cmd)
+  "Send CMD to the current shell buffer, handling eshell vs comint."
+  (if epx-use-eshell
+      (progn
+        (eshell-return-to-prompt)
+        (insert cmd)
+        (eshell-send-input))
+    (comint-send-string (get-buffer-process (current-buffer))
+                        (concat cmd "\n"))))
 
 
 ;;;###autoload
@@ -240,7 +261,6 @@ When called interactively, prompt for COMMAND with completion from history."
   (interactive
    (list (epx--read-shell-command)))
   (let* ((root (epx--current-project-root))
-        
 	 (env-list (plist-get command :env))
 	 (cmd (if env-list
 		  (concat (epx--prepare-env env-list) " " (plist-get command :command))
@@ -249,10 +269,9 @@ When called interactively, prompt for COMMAND with completion from history."
     (if use-compilation
 	(let ((default-directory root))
 	  (compilation-start cmd nil )) ;; TODO: research using project-compile instead
-      (let* ((win (epx--get-or-create-shell-window root))
-	     (proc (get-buffer-process (window-buffer win))))
+      (let ((win (epx--get-or-create-shell-window root)))
 	(select-window win)
-        (comint-send-string proc (concat cmd "\n"))))))
+	(epx--send-to-shell cmd)))))
 
 
 ;;;###autoload
@@ -309,7 +328,8 @@ ENV-VARS and COMPILE default to nil."
 
 
 (defun epx--record-command (command)
-  "Add COMMAND to commands file.  If a command with the same name already exists, throw an error."
+  "Add COMMAND to commands file.
+If a command with the same name already exists, throw an error."
   (let ((locals-file (epx--commands-file)))
     (when (file-exists-p locals-file)
       (let* ((existing-cmds (epx--read-commands-from-file))

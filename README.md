@@ -25,6 +25,7 @@ easily add, remove, and run these project tasks.
 -   Completion prompt for commands defined in the current project.
 -   Re-uses an existing **shell** window or opens one with
     `project-shell`.
+-   Can use `eshell` instead of `shell` via `epx-use-eshell`.
 -   Can run the command in `compilation-mode` instead of a
     shell.
 -   Can use either `.dir-locals.el` or a dedicated `.epx.eld` to store commands.
@@ -49,7 +50,10 @@ You can also always install the package using `M-x package-install` instead.
 # Usage
 
 - You can use variable `epx-commands-file-type` to control where your commands
-  are stored. It accepts the following values: ’locals and ’eld.
+  are stored. It accepts the following values: ‘locals and ‘eld.
+
+- You can set `epx-use-eshell` to `t` to use `eshell` instead of `shell`
+  for command execution.
 
 - `epx-add-command`
 :   Prompt for a command, name, env vars, and whether to use a

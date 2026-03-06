@@ -1,3 +1,6 @@
+# 0.4.0
+- feat: add `epx-use-eshell` option to run commands in `eshell` instead of `shell`
+- refactor: extract `epx--send-to-shell` for sending commands to shell/eshell
 # 0.3.2
 - fix: `epx--rename-deprecated-variable` no longer always returns `t`; callers now correctly fall back to the old variable name when the user declines the rename
 - fix: `epx--current-project-root` uses `if-let` to avoid calling `project-current` twice
